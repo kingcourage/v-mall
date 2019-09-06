@@ -15,6 +15,7 @@
         <module>mall-admin</module>
         <module>mall-search</module>
         <module>mall-portal</module>
+        <module>mall-common</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
