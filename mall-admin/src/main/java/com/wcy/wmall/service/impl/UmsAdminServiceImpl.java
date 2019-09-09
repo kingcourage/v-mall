@@ -1,9 +1,12 @@
 package com.wcy.wmall.service.impl;
 
 import com.github.pagehelper.PageHelper;
+import com.wcy.wmall.dao.UmsAdminPermissionRelationDao;
+import com.wcy.wmall.dao.UmsAdminRoleRelationDao;
 import com.wcy.wmall.dto.UmsAdminParam;
 import com.wcy.wmall.mapper.UmsAdminLoginLogMapper;
 import com.wcy.wmall.mapper.UmsAdminMapper;
+import com.wcy.wmall.mapper.UmsAdminPermissionRelationMapper;
 import com.wcy.wmall.mapper.UmsAdminRoleRelationMapper;
 import com.wcy.wmall.model.*;
 import com.wcy.wmall.service.UmsAdminService;
@@ -29,6 +32,7 @@ import java.beans.Encoder;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @ClassName UmsAdminServiceImpl
@@ -53,6 +57,12 @@ public class UmsAdminServiceImpl implements UmsAdminService {
     private String tokenHead;
     @Autowired
     private UmsAdminRoleRelationMapper umsAdminRoleRelationMapper;
+    @Autowired
+    private UmsAdminRoleRelationDao adminRoleRelationDao;
+    @Autowired
+    private UmsAdminPermissionRelationMapper adminPermissionRelationMapper;
+    @Autowired
+    private UmsAdminPermissionRelationDao adminPermissionRelationDao;
 
 
     @Override
@@ -191,19 +201,52 @@ public class UmsAdminServiceImpl implements UmsAdminService {
                 roleRelation.setRoleId(roleId);
                 list.add(roleRelation);
             }
+            adminRoleRelationDao.insertList(list);
         }
 
-        return 0;
+        return count;
     }
 
     @Override
-    public List<UmsRole> getRoleList(Long admin) {
-        return null;
+    public List<UmsRole> getRoleList(Long adminId) {
+        return adminRoleRelationDao.getRoleList(adminId);
     }
 
     @Override
     public int updatePermission(Long adminId, List<Long> permissionIds) {
+        //删除原所有的权限关系
+        UmsAdminPermissionRelationExample relationExample = new UmsAdminPermissionRelationExample();
+        relationExample.createCriteria().andAdminIdEqualTo(adminId);
+        adminPermissionRelationMapper.deleteByExample(relationExample);
+
+        //获取用户所有的角色权限
+        List<UmsPermission> permissionList = adminRoleRelationDao.getRolePermissionList(adminId);
+        List<Long> rolePermissionList = permissionList.stream().map(UmsPermission::getId).collect(Collectors.toList());
+        if(!CollectionUtils.isEmpty(permissionIds)){
+            List<UmsAdminPermissionRelation> relationList = new ArrayList<>();
+            //筛选出+权限
+            List<Long> addPermissionIdList = permissionIds.stream().filter(permissionId -> !rolePermissionList.contains(permissionId)).collect(Collectors.toList());
+
+            //筛选出-权限
+            List<Long> subPermissionIdList = rolePermissionList.stream().filter(permissionId -> !permissionIds.contains(permissionId)).collect(Collectors.toList());
+
+            //插入+-权限
+            relationList.addAll(convert(adminId,1,addPermissionIdList));
+            relationList.addAll(convert(adminId,-1,subPermissionIdList));
+            return adminPermissionRelationDao.insertList(relationList);
+        }
         return 0;
+    }
+
+    private List<UmsAdminPermissionRelation> convert(Long adminId,Integer type,List<Long> permissionIdList){
+        List<UmsAdminPermissionRelation> relationList = permissionIdList.stream().map(permissionId -> {
+            UmsAdminPermissionRelation relation = new UmsAdminPermissionRelation();
+            relation.setAdminId(adminId);
+            relation.setType(type);
+            relation.setPermissionId(permissionId);
+            return relation;
+        }).collect(Collectors.toList());
+        return relationList;
     }
 
     @Override
