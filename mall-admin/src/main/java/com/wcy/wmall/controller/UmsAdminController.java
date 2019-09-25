@@ -1,10 +1,15 @@
 package com.wcy.wmall.controller;
+import	java.nio.file.Path;
+import	java.util.List;
+import	java.awt.font.NumericShaper.Range;
 import	java.lang.reflect.Parameter;
 
 import com.wcy.wmall.common.api.CommonPage;
 import com.wcy.wmall.common.api.CommonResult;
 import com.wcy.wmall.dto.UmsAdminParam;
 import com.wcy.wmall.model.UmsAdmin;
+import com.wcy.wmall.model.UmsPermission;
+import com.wcy.wmall.model.UmsRole;
 import com.wcy.wmall.service.UmsAdminService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModelProperty;
@@ -147,7 +152,32 @@ public class UmsAdminController {
         return CommonResult.failed();
     }
 
+    @ApiOperation("获取指定用户的角色")
+    @RequestMapping(value = "/role/{adminId}",method = RequestMethod.GET)
+    @ResponseBody
+    public CommonResult<List<UmsRole>> getRoleList(@PathVariable Long adminId){
+        List<UmsRole> roleList = adminService.getRoleList(adminId);
+        return CommonResult.success(roleList);
+    }
 
+    @ApiOperation("给用户分配+-权限")
+    @RequestMapping(value = "/permission/update",method = RequestMethod.POST)
+    @ResponseBody
+    public CommonResult updatePermission(@RequestParam Long adminId,
+                                         @RequestParam("permissionIds") List<Long> permissionIds){
+        int count = adminService.updatePermission(adminId, permissionIds);
+        if(count > 0){
+            return CommonResult.success(count);
+        }
+        return CommonResult.failed();
+    }
 
+    @ApiOperation("获取用户所有的权限")
+    @RequestMapping(value = "/permission/{adminId}",method = RequestMethod.GET)
+    @ResponseBody
+    public CommonResult<List<UmsPermission>> getPermissionList(@PathVariable Long adminId){
+        List<UmsPermission> permissions = adminService.getPermissionList(adminId);
+        return CommonResult.success(permissions);
+    }
 
 }
