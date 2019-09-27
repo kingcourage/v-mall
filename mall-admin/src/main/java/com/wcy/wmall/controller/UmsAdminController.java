@@ -1,9 +1,4 @@
 package com.wcy.wmall.controller;
-import	java.nio.file.Path;
-import	java.util.List;
-import	java.awt.font.NumericShaper.Range;
-import	java.lang.reflect.Parameter;
-
 import com.wcy.wmall.common.api.CommonPage;
 import com.wcy.wmall.common.api.CommonResult;
 import com.wcy.wmall.dto.UmsAdminParam;
@@ -12,7 +7,6 @@ import com.wcy.wmall.model.UmsPermission;
 import com.wcy.wmall.model.UmsRole;
 import com.wcy.wmall.service.UmsAdminService;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,7 +35,7 @@ public class UmsAdminController {
     private UmsAdminService adminService;
     @Value("${jwt.tokenHeader}")
     private String tokenHeader;
-    @Value("${jwt,tokenHead}")
+    @Value("${jwt.tokenHead}")
     private String tokenHead;
 
     @ApiOperation(value = "用户注册")
@@ -50,7 +44,7 @@ public class UmsAdminController {
     public CommonResult<UmsAdmin> register(@RequestBody UmsAdminParam umsAdminParam, BindingResult result){
         UmsAdmin umsAdmin = adminService.register(umsAdminParam);
         if(umsAdmin == null){
-            CommonResult.failed();
+           return CommonResult.failed();
         }
         return CommonResult.success(umsAdmin);
     }
